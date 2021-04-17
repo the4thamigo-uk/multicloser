@@ -26,8 +26,9 @@ func TestClose(t *testing.T) {
 		ii = append(ii, 1)
 		return nil
 	})
-	m.WrapDefer(func() {
+	m.Defer(func() error {
 		ii = append(ii, 2)
+		return nil
 	})
 	m.Defer(func() error {
 		ii = append(ii, 3)
@@ -55,8 +56,8 @@ func TestCloseErrors(t *testing.T) {
 	m.Defer(func() error {
 		return err1
 	})
-	m.WrapDefer(func() {
-
+	m.Defer(func() error {
+		return nil
 	})
 	m.Defer(func() error {
 		return err2
@@ -85,4 +86,17 @@ func TestClosePanic(t *testing.T) {
 
 	require.Panics(t, func() { m.Close() })
 	require.Equal(t, []int{3, 2, 1}, ii)
+}
+
+func TestWrap(t *testing.T) {
+	var i int
+	err := Wrap(func() { i = 1 })()
+	require.NoError(t, err)
+	require.Equal(t, 1, i)
+}
+
+func TestWrapf(t *testing.T) {
+	err := Wrapf(func() error { return errors.New("err") }, "wrapped : %w")()
+	require.Error(t, err)
+	require.Equal(t, "wrapped : err", err.Error())
 }

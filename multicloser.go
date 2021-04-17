@@ -1,6 +1,7 @@
 package multicloser
 
 import (
+	"fmt"
 	"github.com/hashicorp/go-multierror"
 	"sync"
 )
@@ -22,11 +23,6 @@ func Close() (err error) {
 // Defer executes `Defer() on the singleton `MultiCloser`
 func Defer(f func() error) {
 	cls.Defer(f)
-}
-
-// WrapDefer executes `WrapDefer() on the singleton `MultiCloser`
-func WrapDefer(f func()) {
-	cls.WrapDefer(f)
 }
 
 // Close executes all the deferred functions in reverse order.
@@ -61,12 +57,15 @@ func (m *MultiCloser) Defer(f func() error) {
 	m.mtx.Unlock()
 }
 
-// WrapDefer queues a function to be called in `Close()`
-func (m *MultiCloser) WrapDefer(f func()) {
-	m.Defer(wrap(f))
+// Wrapf decorates the error returned from the function with the specified
+// format string.
+func Wrapf(f func() error, format string) func() error {
+	return func() error {
+		return fmt.Errorf(format, f())
+	}
 }
 
-func wrap(f func()) func() error {
+func Wrap(f func()) func() error {
 	return func() error {
 		f()
 		return nil
