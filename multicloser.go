@@ -29,20 +29,23 @@ func WrapDefer(f func()) {
 	cls.WrapDefer(f)
 }
 
-// Close executes all the deferred functions in reverse order
+// Close executes all the deferred functions in reverse order.
+// If a panic occurs when calling any of the deferred functions,
+// the other functions will execute also.
 func (m *MultiCloser) Close() (err error) {
 	m.mtx.Lock()
 	ff := m.ff
 	m.ff = nil
 	m.mtx.Unlock()
 
-	for i := len(ff) - 1; i >= 0; i-- {
-		f := ff[i]
-		if e := f(); e != nil {
-			err = multierror.Append(err, e)
-		}
+	for _, f := range ff {
+		defer func(f func() error) {
+			if e := f(); e != nil {
+				err = multierror.Append(err, e)
+			}
+		}(f)
 	}
-	return err
+	return
 }
 
 // Defer queues a function to be called in `Close()`.

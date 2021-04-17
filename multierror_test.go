@@ -18,7 +18,7 @@ func TestNil(t *testing.T) {
 	require.Panics(t, func() { m.Defer(nil) })
 }
 
-func TestIOCloser(t *testing.T) {
+func TestClose(t *testing.T) {
 	var m MultiCloser
 
 	var ii []int
@@ -45,7 +45,7 @@ func TestIOCloser(t *testing.T) {
 	require.Nil(t, ii)
 }
 
-func TestIOCloserErrors(t *testing.T) {
+func TestCloseErrors(t *testing.T) {
 	var m MultiCloser
 
 	err1 := errors.New("1")
@@ -64,4 +64,25 @@ func TestIOCloserErrors(t *testing.T) {
 
 	err := m.Close()
 	require.Equal(t, merr, err)
+}
+
+func TestClosePanic(t *testing.T) {
+	var m MultiCloser
+
+	var ii []int
+	m.Defer(func() error {
+		ii = append(ii, 1)
+		return nil
+	})
+	m.Defer(func() error {
+		ii = append(ii, 2)
+		panic("")
+	})
+	m.Defer(func() error {
+		ii = append(ii, 3)
+		return nil
+	})
+
+	require.Panics(t, func() { m.Close() })
+	require.Equal(t, []int{3, 2, 1}, ii)
 }
