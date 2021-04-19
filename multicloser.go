@@ -15,12 +15,12 @@ type (
 
 var cls MultiCloser
 
-// Close executes `Close() on the singleton `MultiCloser`
+// Close executes Close() on the singleton MultiCloser
 func Close() (err error) {
 	return cls.Close()
 }
 
-// Defer executes `Defer() on the singleton `MultiCloser`
+// Defer executes Defer() on the singleton MultiCloser
 func Defer(f func() error) {
 	cls.Defer(f)
 }
@@ -44,8 +44,8 @@ func (m *MultiCloser) Close() (err error) {
 	return
 }
 
-// Defer queues a function to be called in `Close()`.
-// Passing `nil` to this function will cause a panic.
+// Defer queues a function to be called in Close().
+// Passing nil to this function will cause a panic.
 func (m *MultiCloser) Defer(f func() error) {
 
 	if f == nil {
@@ -55,6 +55,12 @@ func (m *MultiCloser) Defer(f func() error) {
 	m.mtx.Lock()
 	m.ff = append(m.ff, f)
 	m.mtx.Unlock()
+}
+
+// Deferf queues a function to be called in Close(),
+// but wraps any resulting error with the provided format string.
+func (m *MultiCloser) Deferf(f func() error, format string) {
+	m.Defer(Wrapf(f, format))
 }
 
 // Wrapf decorates the error returned from the function with the specified
