@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func testEmpty(t *testing.T) {
+func TestEmpty(t *testing.T) {
 	var m MultiCloser
 	err := m.Close()
 	require.NoError(t, err)
