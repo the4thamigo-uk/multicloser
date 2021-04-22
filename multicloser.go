@@ -6,12 +6,17 @@ import (
 	"sync"
 )
 
-type (
-	MultiCloser struct {
-		ff  []func() error
-		mtx sync.Mutex
-	}
-)
+// Multicloser provides a way to defer a number of functions (of form Close() error), to be
+// executed when the Close() function of the MultiCloser is called. Errors returned from
+// any of the deferred function invocations, are merged into a single error returned by the
+// Close().
+//
+// The intent of this library is to provide a capability that is similar to the testing.Cleanup()
+// mechanism, so you can defer functions to a scope other than the end of the current function.
+type MultiCloser struct {
+	ff  []func() error
+	mtx sync.Mutex
+}
 
 var cls MultiCloser
 
@@ -71,6 +76,7 @@ func Wrapf(f func() error, format string) func() error {
 	}
 }
 
+// Wrap lifts a function that does not return an error into one that returns nil
 func Wrap(f func()) func() error {
 	return func() error {
 		f()
