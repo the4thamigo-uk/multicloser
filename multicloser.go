@@ -1,3 +1,13 @@
+// multicloser provides a way to defer a number of functions (func() error), to be
+// executed when the Close() function of the multiCloser is called. Errors returned from
+// any of the deferred function invocations, are merged into a single error returned by the
+// Close() method.
+//
+// The intent of this library is to provide a capability that is similar to the testing.Cleanup()
+// mechanism, so you can defer functions to a scope, other than at the end of the current function.
+// This allows you to move the creation and cleanup logic for resources, into separate functions
+// and this helps to keep your higher level functions (e.g. main()) simpler. Additionally it avoids
+// having to deal with errors in multiple defer commands.
 package multicloser
 
 import (
@@ -6,15 +16,8 @@ import (
 	"sync"
 )
 
-// Multicloser provides a way to defer a number of functions (of form Close() error), to be
-// executed when the Close() function of the multiCloser is called. Errors returned from
-// any of the deferred function invocations, are merged into a single error returned by the
-// Close().
-//
-// The intent of this library is to provide a capability that is similar to the testing.Cleanup()
-// mechanism, so you can defer functions to a scope other than the end of the current function.
 type (
-	MultiCloser interface {
+	Closer interface {
 		Close() error
 		Defer(func() error)
 		Deferf(func() error, string)
@@ -27,7 +30,7 @@ type (
 )
 
 // New creates a new MultiCloser
-func New() MultiCloser {
+func New() Closer {
 	return new(multiCloser)
 }
 

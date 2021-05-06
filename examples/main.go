@@ -13,29 +13,36 @@ func main() {
 	}
 }
 
-func run() error {
+func run() (err error) {
 
-	// close all resources managed by the global instance at the end of scope
-	// Note that you can create your own instance if you prefer.
-	defer multicloser.Close()
+	// close all resources managed by the multicloser instance at the end of scope
+	mc := multicloser.New()
+	defer func() { err = mc.Close() }()
 
-	// create a temporary file that will be deleted by the multicloser
-	fn, err := createTempFile("hello world")
+	fn, err := createTempFile(mc, "hello world")
+	if err != nil {
+		return err
+	}
+	// no defer needed to clean up!
+
+	f, err := openFile(mc, fn)
+	if err != nil {
+		return err
+	}
+	// no defer needed to clean up!
+
+	// read from file
+	b := make([]byte, 100)
+	n, err := f.Read(b)
 	if err != nil {
 		return err
 	}
 
-	// read the file
-	b, err := os.ReadFile(fn)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(string(b))
+	fmt.Println(string(b[:n]))
 	return nil
 }
 
-func createTempFile(msg string) (string, error) {
+func createTempFile(mc multicloser.Closer, msg string) (string, error) {
 	f, err := os.CreateTemp("", "")
 	if err != nil {
 		return "", err
@@ -46,8 +53,25 @@ func createTempFile(msg string) (string, error) {
 
 	// we can use the multicloser in a similar way to testing.Cleanup(),
 	// which means we can move logic from run() into separate functions.
-	multicloser.Defer(func() error {
+	// Here we delete the file when we have finished with it.
+	mc.Defer(func() error {
+		fmt.Printf("Removing temporary file %s\n", f.Name())
 		return os.Remove(f.Name())
 	})
+
 	return f.Name(), nil
+}
+
+func openFile(mc multicloser.Closer, fn string) (*os.File, error) {
+	f, err := os.Open(fn)
+	if err != nil {
+		return nil, err
+	}
+
+	// we ensure we close the file when the multicloser closes
+	mc.Defer(func() error {
+		fmt.Printf("Closing file for reading %s\n", f.Name())
+		return f.Close()
+	})
+	return f, nil
 }
