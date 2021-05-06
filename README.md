@@ -7,4 +7,4 @@ to a scope which is not the end of the current function.
 
 # Usage
 
-See (./examples/main.go) for details of usage.
+See [examples](./examples/main.go) for details of usage.
