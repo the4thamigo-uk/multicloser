@@ -1,25 +1,26 @@
-package multicloser
+package multicloser_test
 
 import (
 	"errors"
 	"github.com/hashicorp/go-multierror"
 	"github.com/stretchr/testify/require"
+	"github.com/the4thamigo-uk/multicloser"
 	"testing"
 )
 
 func TestEmpty(t *testing.T) {
-	var m MultiCloser
+	m := multicloser.New()
 	err := m.Close()
 	require.NoError(t, err)
 }
 
 func TestNil(t *testing.T) {
-	var m MultiCloser
+	m := multicloser.New()
 	require.Panics(t, func() { m.Defer(nil) })
 }
 
 func TestClose(t *testing.T) {
-	var m MultiCloser
+	m := multicloser.New()
 
 	var ii []int
 	m.Defer(func() error {
@@ -47,7 +48,7 @@ func TestClose(t *testing.T) {
 }
 
 func TestCloseErrors(t *testing.T) {
-	var m MultiCloser
+	m := multicloser.New()
 
 	err1 := errors.New("1")
 	err2 := errors.New("2")
@@ -68,7 +69,7 @@ func TestCloseErrors(t *testing.T) {
 }
 
 func TestClosePanic(t *testing.T) {
-	var m MultiCloser
+	m := multicloser.New()
 
 	var ii []int
 	m.Defer(func() error {
@@ -90,13 +91,13 @@ func TestClosePanic(t *testing.T) {
 
 func TestWrap(t *testing.T) {
 	var i int
-	err := Wrap(func() { i = 1 })()
+	err := multicloser.Wrap(func() { i = 1 })()
 	require.NoError(t, err)
 	require.Equal(t, 1, i)
 }
 
 func TestWrapf(t *testing.T) {
-	err := Wrapf(func() error { return errors.New("err") }, "wrapped : %w")()
+	err := multicloser.Wrapf(func() error { return errors.New("err") }, "wrapped : %w")()
 	require.Error(t, err)
 	require.Equal(t, "wrapped : err", err.Error())
 }
