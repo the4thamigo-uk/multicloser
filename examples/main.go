@@ -69,9 +69,9 @@ func openFile(mc multicloser.Closer, fn string) (*os.File, error) {
 	}
 
 	// we ensure we close the file when the multicloser closes
-	mc.Defer(func() error {
+	mc.Deferf(func() error {
 		fmt.Printf("Closing file for reading %s\n", f.Name())
 		return f.Close()
-	})
+	}, "failed to close file : %w")
 	return f, nil
 }

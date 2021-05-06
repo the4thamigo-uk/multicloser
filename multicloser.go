@@ -89,7 +89,11 @@ func Defer(f func() error) {
 // format string.
 func Wrapf(f func() error, format string) func() error {
 	return func() error {
-		return fmt.Errorf(format, f())
+		err := f()
+		if err != nil {
+			return fmt.Errorf(format, err)
+		}
+		return nil
 	}
 }
 
