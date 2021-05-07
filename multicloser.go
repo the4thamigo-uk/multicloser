@@ -19,6 +19,7 @@ import (
 type (
 	Closer interface {
 		Close() error
+		CloseAndWrap(error) error
 		Defer(func() error)
 		Deferf(func() error, string)
 	}
@@ -43,6 +44,12 @@ func (m *multiCloser) Close() (err error) {
 	m.ff = nil
 	m.mtx.Unlock()
 
+	defer func() {
+		if err != nil {
+			err = multierror.Append(fmt.Errorf("errors encountered on close"), err)
+		}
+	}()
+
 	for _, f := range ff {
 		defer func(f func() error) {
 			if e := f(); e != nil {
@@ -51,6 +58,17 @@ func (m *multiCloser) Close() (err error) {
 		}(f)
 	}
 	return
+}
+
+// CloseWithWrap wraps the given error with the error returned from Close()
+func (m *multiCloser) CloseAndWrap(err error) error {
+	if cerr := m.Close(); cerr != nil {
+		if err != nil {
+			return multierror.Append(err, cerr)
+		}
+		return cerr
+	}
+	return err
 }
 
 // Defer queues a function to be called in Close().

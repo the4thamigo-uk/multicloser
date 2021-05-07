@@ -2,7 +2,6 @@ package multicloser_test
 
 import (
 	"errors"
-	"github.com/hashicorp/go-multierror"
 	"github.com/stretchr/testify/require"
 	"github.com/the4thamigo-uk/multicloser"
 	"testing"
@@ -52,7 +51,6 @@ func TestCloseErrors(t *testing.T) {
 
 	err1 := errors.New("1")
 	err2 := errors.New("2")
-	merr := multierror.Append(err2, err1)
 
 	m.Defer(func() error {
 		return err1
@@ -65,7 +63,9 @@ func TestCloseErrors(t *testing.T) {
 	})
 
 	err := m.Close()
-	require.Equal(t, merr, err)
+	require.Error(t, err)
+	require.ErrorIs(t, err, err1)
+	require.ErrorIs(t, err, err2)
 }
 
 func TestClosePanic(t *testing.T) {

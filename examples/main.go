@@ -17,7 +17,7 @@ func run() (err error) {
 
 	// close all resources managed by the multicloser instance at the end of scope
 	mc := multicloser.New()
-	defer func() { err = mc.Close() }()
+	defer func() { err = mc.CloseAndWrap(err) }()
 
 	fn, err := createTempFile(mc, "hello world")
 	if err != nil {
