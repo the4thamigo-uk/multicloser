@@ -72,19 +72,6 @@ func (m *multiCloser) Deferf(f func() error, format string) {
 	m.Defer(Wrapf(f, format))
 }
 
-// cls is the global singleton instance
-var cls multiCloser
-
-// Close executes Close() on the singleton multiCloser
-func Close() (err error) {
-	return cls.Close()
-}
-
-// Defer executes Defer() on the singleton multiCloser
-func Defer(f func() error) {
-	cls.Defer(f)
-}
-
 // Wrapf decorates the error returned from the function with the specified
 // format string.
 func Wrapf(f func() error, format string) func() error {
